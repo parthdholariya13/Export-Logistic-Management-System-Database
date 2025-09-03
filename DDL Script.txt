@@ -1,0 +1,154 @@
+------------------------------------------------------------------------------------< DDL SCRIPT >------------------------------------------------------------------------------------------
+
+
+CREATE SCHEMA "Export Logistic Management System";
+SET SEARCH_PATH TO "Export Logistic Management System";
+
+
+CREATE TABLE Seller (
+  SID INT PRIMARY KEY,
+  Name VARCHAR(30),
+  Contact VARCHAR(20),
+  Email VARCHAR(40),
+  Address VARCHAR(40),
+  Zipcode VARCHAR(10),
+  FOREIGN KEY(Zipcode) REFERENCES Zipcode(Zipcode)
+);
+
+CREATE TABLE Consumer (
+  CID INT PRIMARY KEY,
+  Name VARCHAR(30),
+  Contact VARCHAR(20),
+  Email VARCHAR(40),
+  Address VARCHAR(40),
+  Zipcode VARCHAR(10),
+  FOREIGN KEY(Zipcode) REFERENCES Zipcode(Zipcode)
+);
+
+CREATE TABLE Agency (
+  AID INT PRIMARY KEY,
+  Name VARCHAR(30),
+  Email VARCHAR(40),
+  Rating DECIMAL
+);
+
+
+CREATE TABLE Zipcode (
+    Zipcode VARCHAR(10) PRIMARY KEY,
+    City VARCHAR(25),
+    State VARCHAR(25),
+    Country VARCHAR(25)
+);
+
+CREATE TABLE Goods (
+    GID INT PRIMARY KEY,
+    Name VARCHAR(30),
+    Type VARCHAR(20),
+    PerUnitTax DECIMAL
+);
+
+CREATE TABLE Invoice (
+    Inv_No INT PRIMARY KEY,
+    Inv_Date DATE,
+    AID INT,
+    SID INT,
+    CID INT,
+    GID INT,
+    Qty DECIMAL,
+    Total_Amount DECIMAL,
+    Payment_Status VARCHAR(15) DEFAULT 'NO',
+    Order_Status VARCHAR(15),
+    FOREIGN KEY(AID) REFERENCES Agency(AID),
+    FOREIGN KEY(SID) REFERENCES Seller(SID),
+    FOREIGN KEY(CID) REFERENCES Consumer(CID),
+    FOREIGN KEY(GID) REFERENCES Goods(GID)
+);
+
+CREATE TABLE Ship (
+    Ship_ID INT PRIMARY KEY,
+	Name VARCHAR(30),
+	G_type VARCHAR(20),
+	Availability VARCHAR(5),
+	AID INT,
+	Pickup_Location VARCHAR(30),
+	Delivery_Location VARCHAR(30),
+	FOREIGN KEY(AID) REFERENCES Agency(AID)
+);
+
+CREATE TABLE Shipment_Location (
+    Tracking_ID INT PRIMARY KEY,
+	Ship_ID INT,
+	Estimated_Arrival_Date DATE,
+	Nearest_Country VARCHAR(20),
+	FOREIGN KEY(Ship_ID) REFERENCES Ship(Ship_ID)
+);
+
+CREATE TABLE Have (
+    AID INT,
+	GID INT,
+	PRIMARY KEY(AID,GID),
+	FOREIGN KEY(AID) REFERENCES Agency(AID),
+	FOREIGN KEY(GID) REFERENCES Goods(GID)
+);
+
+CREATE TABLE Charges (
+    AID INT,
+    G_type VARCHAR(20),
+	Pickup_Location VARCHAR(30),
+	Delivery_Location VARCHAR(30),
+	Charge DECIMAL,
+    PRIMARY KEY(AID,G_type,Pickup_Location,Delivery_Location),
+	FOREIGN KEY(AID) REFERENCES Agency(AID)
+);
+
+CREATE TABLE Agency_Location (
+    AID INT,
+	Zipcode VARCHAR(10),
+    Contact VARCHAR(20),
+    Address VARCHAR(40),
+    PRIMARY KEY(AID,Zipcode),
+	FOREIGN KEY(AID) REFERENCES Agency(AID),
+	FOREIGN KEY(Zipcode) REFERENCES Zipcode(Zipcode)
+);
+
+CREATE TABLE DockYard (
+    DockYard_code INT PRIMARY KEY,
+	Name VARCHAR(30),
+	Zipcode VARCHAR(10),
+	Contact VARCHAR(20),
+	Email VARCHAR(40),
+	Address VARCHAR(40),
+	FOREIGN KEY(Zipcode) REFERENCES Zipcode(Zipcode)
+);
+
+CREATE TABLE Consumer_Rating (
+    CID INT,
+	AID INT,
+	Consumer_Rating INT,
+	Reviews VARCHAR(100),
+	PRIMARY KEY(CID,AID),
+	FOREIGN KEY(CID) REFERENCES Consumer(CID),
+	FOREIGN KEY(AID) REFERENCES Agency(AID)
+);
+
+CREATE TABLE Seller_Rating (
+    SID INT,
+	AID INT,
+	Seller_Rating INT,
+	Reviews VARCHAR(100),
+	PRIMARY KEY(SID,AID),
+	FOREIGN KEY(SID) REFERENCES Seller(SID),
+	FOREIGN KEY(AID) REFERENCES Agency(AID)
+);
+
+CREATE TABLE Payment (
+    Payment_ID INT PRIMARY KEY,
+	Ship_ID INT,
+	Inv_No INT,
+	Payment_Date DATE,
+	Payment_Type VARCHAR(15),
+	Amount_Paid DECIMAL,
+	FOREIGN KEY(Ship_ID) REFERENCES Ship(Ship_ID),
+	FOREIGN KEY(Inv_No) REFERENCES Invoice(Inv_No)
+);
+

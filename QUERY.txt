@@ -1,0 +1,150 @@
+--------------------------------------------------------------------------------------< QUERY >---------------------------------------------------------------------------------------------
+
+
+SET SEARCH_PATH TO IMPORT;
+
+-- 1 List agencies and charges for shipment on basis of goods id, destination, present location of the seller:
+SELECT AID,Name,CHARGE FROM AGENCY 
+NATURAL JOIN CHARGES WHERE G_TYPE='Vehicles' 
+AND PICKUP_LOCATION='Auckland Port' 
+AND DELIVERY_LOCATION='Hamburg Port'
+ORDER BY CHARGE;
+
+
+--2 List all feedback(rating) for a particular agency:
+SELECT REVIEWS FROM SELLER_RATING WHERE AID=1010
+UNION 
+SELECT REVIEWS FROM CONSUMER_RATING WHERE AID=1010;
+
+
+--3 List all dockyard details where a particular agency is listed:
+SELECT D.* FROM DOCKYARD AS D 
+JOIN AGENCY_LOCATION AS A ON D.ZIPCODE=A.ZIPCODE WHERE AID=1001;
+
+
+--4 There is one seller and his order and payment is confirmed by the agency and his corresponding consumer searches for the current location of the shipment:
+SELECT S.* FROM INVOICE 
+NATURAL JOIN PAYMENT 
+NATURAL JOIN SHIPMENT_LOCATION AS S 
+WHERE CID=70706;
+
+
+--5 Retrieve the shipments that were delivered after the estimated delivery date:
+SELECT S.TRACKING_ID, S.SHIP_ID,S.ESTIMATED_ARRIVAL_DATE, I.INV_DATE 
+FROM SHIPMENT_LOCATION AS S 
+NATURAL JOIN PAYMENT AS P 
+NATURAL JOIN INVOICE AS I WHERE I.ORDER_STATUS='delivered' 
+AND I.INV_DATE>S.ESTIMATED_ARRIVAL_DATE;
+
+
+--6 List all seller who have made a payment using CASH and whose total payments exceed 50000 Rs:
+SELECT S.* FROM SELLER AS S 
+NATURAL JOIN INVOICE AS I 
+NATURAL JOIN PAYMENT AS P WHERE AMOUNT_PAID>50000 AND PAYMENT_TYPE='Cash';
+
+
+--7 Find the top 3 carrier that has delivered the highest number of order:
+SELECT AID, NAME,COUNT(AID) FROM INVOICE 
+NATURAL JOIN AGENCY WHERE PAYMENT_STATUS='paid' and ORDER_STATUS='delivered'
+GROUP BY AID, NAME ORDER BY COUNT(AID) DESC LIMIT 3;
+
+
+--8 Find the top 3 products that have been sold the most in terms of total quantity and display the product name along with the total quantity sold:
+SELECT COUNT(QTY), TYPE FROM INVOICE 
+NATURAL JOIN PAYMENT 
+NATURAL JOIN GOODS WHERE ORDER_STATUS='delivered'
+GROUP BY TYPE ORDER BY COUNT(QTY) DESC LIMIT 3;
+
+
+--9 Display the top 2 carriers with the most  in the past month:
+SELECT COUNT(AID), AID, NAME, A.EMAIL FROM INVOICE 
+NATURAL JOIN AGENCY AS A WHERE PAYMENT_STATUS='paid' AND ORDER_STATUS='delivered'
+AND INV_DATE>'2024-01-01' AND INV_DATE<'2024-01-31'
+GROUP BY AID, NAME, A.EMAIL ORDER BY COUNT(AID) DESC LIMIT 2;
+
+
+--10 Agency searches for the estimated arrival date for the shipment for particular invoice no:
+SELECT S.SHIP_ID,S.ESTIMATED_ARRIVAL_DATE FROM INVOICE 
+NATURAL JOIN PAYMENT 
+NATURAL JOIN SHIPMENT_LOCATION AS S 
+WHERE INV_NO=501024;
+
+--11 Agency searches for the current location of the shipment for particular invoice no:
+SELECT s.* FROM INVOICE 
+NATURAL JOIN PAYMENT 
+NATURAL JOIN SHIPMENT_LOCATION AS S 
+WHERE ORDER_STATUS='undelivered' AND INV_NO=501024;
+
+
+--12 Agency search for availability of ship for a particular gtype, pickup and delivery location:
+SELECT SHIP_ID, NAME, AVAILABILITY FROM SHIP 
+WHERE PICKUP_LOCATION='Los Angeles Port' AND DELIVERY_LOCATION='Milan Port' 
+AND G_TYPE='FoodStuff' and aid=1009;
+
+
+--13 List top 3 agencies basis of particular Gtype and pickup and delivery location:
+SELECT A.* FROM AGENCY AS A
+JOIN SHIP AS S ON A.AID=S.AID  WHERE G_TYPE='DryCargo' 
+AND PICKUP_LOCATION='Los Angeles Port' 
+AND DELIVERY_LOCATION='Johannesburg Port'
+ORDER BY RATING DESC LIMIT 3;
+
+
+--14 Agency search for details of seller on basis of invoice number:
+SELECT S.* FROM SELLER AS S NATURAL JOIN INVOICE WHERE INV_NO=501035;
+
+
+--15 Calculate the total amount of unpaid invoices for each agency:
+SELECT AID, SUM(TOTAL_AMOUNT) AS TOTAL_UNPAID_AMOUNT FROM INVOICE
+NATURAL JOIN AGENCY WHERE PAYMENT_STATUS='unpaid' 
+GROUP BY AID ORDER BY AID;
+
+
+--16 Calculate the total tax collected for each type of good:
+SELECT NAME, SUM(QTY*PERUNITTAX) AS TOTAL_TAX FROM GOODS  
+NATURAL JOIN INVOICE GROUP BY NAME; 
+
+
+--17 Finding sellers and consumers with the same contact information (phone or email):
+SELECT SID, C.* FROM SELLER NATURAL JOIN CONSUMER AS C;
+	
+
+--18 Retrieve all invoices along with the associated seller, consumer, and agency information:
+SELECT INV_NO, A.NAME AS AGENCY_NAME, S.NAME AS SELLER_NAME, C.NAME AS CONSUMER_NAME, GID, QTY, TOTAL_AMOUNT, INV_DATE 
+FROM INVOICE AS I JOIN SELLER AS S ON I.SID=S.SID
+JOIN CONSUMER AS C ON I.CID=C.CID
+JOIN AGENCY AS A ON I.AID=A.AID;
+
+
+--19 Calculate the total paid amount for each Ship:
+SELECT SHIP_ID, NAME, SUM(AMOUNT_PAID) AS AMOUNT FROM SHIP 
+NATURAL JOIN PAYMENT GROUP BY SHIP_ID,NAME;
+
+
+--20 Identifying seller which payments are due: 
+SELECT SID, NAME, SUM(TOTAL_AMOUNT) AS TOTAL_DUE_AMOUNT FROM INVOICE 
+NATURAL JOIN SELLER WHERE PAYMENT_STATUS='paid' GROUP BY SID, NAME;
+
+
+--21 Finding the number of order for each country for each agency:
+SELECT AID, COUNTRY, COUNT(*) FROM INVOICE NATURAL JOIN CONSUMER 
+NATURAL JOIN ZIPCODE WHERE ORDER_STATUS='delivered'
+GROUP BY AID,COUNTRY;
+
+
+--22 List all agencies along with the number of unique consumers they have served:
+SELECT A.AID,A.NAME, COUNT(DISTINCT S.SID) AS NO_OF_SELLER 
+FROM AGENCY AS A JOIN INVOICE AS I ON A.AID=I.AID
+JOIN SELLER AS S ON I.SID=S.SID GROUP BY A.AID;
+
+
+--23 List all agencies with their contact details and the count of associated goods they have:      
+SELECT A.AID, NAME, EMAIL, COUNT(GID) FROM AGENCY AS A 
+LEFT JOIN HAVE AS H ON A.AID=H.AID
+GROUP BY A.AID,NAME,EMAIL;
+
+
+--24 Identify the busiest pickup locations (top 5) for shipments and their corresponding ship counts:
+SELECT PICKUP_LOCATION, COUNT(*) AS SHIPMENT_COUNT 
+FROM SHIP NATURAL JOIN SHIPMENT_LOCATION 
+GROUP BY PICKUP_LOCATION ORDER BY SHIPMENT_COUNT DESC LIMIT 5;
