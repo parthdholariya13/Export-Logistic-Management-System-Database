@@ -39,33 +39,14 @@ The database is fully normalized to **Boyce-Codd Normal Form (BCNF)**.
    ```sql
    CREATE SCHEMA "Export Logistic Management System";
    SET SEARCH_PATH TO "Export Logistic Management System";
-Run DDL Script:
+2. **Run DDL Script:**
 Execute DDL Script.txt to create tables.
 
-Insert Data:
+3. **Insert Data:**
 Run INSERT DATA.txt to populate sample data.
 
-Explore Queries:
+4. **Explore Queries:**
 Execute QUERY.txt to analyze operations, reports, and insights.
-🔍 Example Queries
-
-Agencies and shipment charges by route:
-
-SELECT AID, Name, Charge 
-FROM Agency NATURAL JOIN Charges 
-WHERE G_Type='Vehicles' 
-AND Pickup_Location='Auckland Port' 
-AND Delivery_Location='Hamburg Port'
-ORDER BY Charge;
-
-
-Top 3 carriers by delivered orders:
-
-SELECT AID, Name, COUNT(AID) 
-FROM Invoice NATURAL JOIN Agency 
-WHERE Payment_Status='paid' AND Order_Status='delivered'
-GROUP BY AID, Name
-ORDER BY COUNT(AID) DESC LIMIT 3;
 
 🚀 Features
 
